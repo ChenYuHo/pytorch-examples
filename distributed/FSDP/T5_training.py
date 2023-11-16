@@ -30,7 +30,6 @@ from torch.utils.data import DataLoader
 from pathlib import Path
 from summarization_dataset import *
 import policies
-import model_checkpointing
 from configs import fsdp_config, train_config
 from utils import (bfloat_support, setup,
                    cleanup, get_date_of_run,
@@ -121,8 +120,6 @@ def fsdp_main(args):
         device_id=torch.cuda.current_device(),
         limit_all_gathers=fsdp_config.limit_all_gathers)
     
-    if fsdp_config.fsdp_activation_checkpointing:
-        policies.apply_fsdp_checkpointing(model)
 
     # Set up optimizer and scheduler
     optimizer = optim.AdamW(model.parameters(), lr=train_config.lr)
@@ -168,21 +165,6 @@ def fsdp_main(args):
                     format_metrics_to_gb(torch.cuda.memory_reserved())
                 )
 
-        if train_config.save_model and curr_val_loss < best_val_loss:
-            
-            if fsdp_config.checkpoint_type == StateDictType.FULL_STATE_DICT:
-                model_checkpointing.save_model_checkpoint(
-                    model, optimizer, rank, fsdp_config, epoch=1
-                )
-            elif fsdp_config.checkpoint_type == StateDictType.SHARDED_STATE_DICT:
-                model_checkpointing.save_model_and_optimizer_sharded(model, rank, fsdp_config)
-                if fsdp_config.save_optimizer:
-                    model_checkpointing.save_model_and_optimizer_sharded(model, rank, fsdp_config, optim=optimizer)
-
-            if fsdp_config.save_optimizer:
-                model_checkpointing.save_optimizer_checkpoint(
-                    model, optimizer, rank, fsdp_config, epoch=1
-                )           
         if curr_val_loss < best_val_loss:
 
             best_val_loss = curr_val_loss
@@ -206,7 +188,7 @@ if __name__ == '__main__':
                         help='random seed (default: 1)')
     parser.add_argument('--track_memory', action='store_false', default=True,
                         help='track the gpu memory')
-    parser.add_argument('--run_validation', action='store_false', default=True,
+    parser.add_argument('--run_validation', action='store_true', default=False,
                         help='running the validation')
     args = parser.parse_args()
 
