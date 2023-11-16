@@ -43,7 +43,9 @@ def train(args, model, rank, world_size, train_loader, optimizer, epoch, sampler
         inner_pbar = tqdm.tqdm(
             range(len(train_loader)), colour="blue", desc="r0 Training Epoch"
         )
-    for batch in train_loader:
+    for iteration, batch in enumerate(train_loader):
+        if args.batches and iteration >= args.batches:
+            break
         for key in batch.keys():
             batch[key] = batch[key].to(local_rank)
         optimizer.zero_grad()
