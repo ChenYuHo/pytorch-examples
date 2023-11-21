@@ -186,6 +186,10 @@ if __name__ == '__main__':
                         help='number of epochs to train')
     parser.add_argument('--batches', type=int, default=0,
                         help='number of batches to train')
+    parser.add_argument('--warmup-batches', type=int, default=0,
+                        help='number of batches to warmup before reporting iteration times')
+    parser.add_argument('--profile-batches', type=int, default=0,
+                        help='number of batches to collect execution trace for')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--track_memory', action='store_false', default=True,
